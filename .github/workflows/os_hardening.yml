@@ -39,9 +39,13 @@ jobs:
           - molecule_distro: opensuse_tumbleweed
             molecule_docker_command: "/usr/lib/systemd/systemd"
         molecule_distro:
+          - almalinux8
+          - almalinux9
+          - almalinux10
           - centosstream9
           - rocky8
           - rocky9
+          - rocky10
           - fedora39
           - fedora40
           - ubuntu2004
@@ -49,21 +53,22 @@ jobs:
           - ubuntu2404
           - debian11
           - debian12
+          - debian13
           - amazon2023
           - arch
         molecule_docker_command:
           - "/lib/systemd/systemd"
     steps:
       - name: Checkout repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
           path: ansible_collections/devsec/hardening
           submodules: true
 
       - name: Set up Python
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: 3.12
+          python-version: 3.13
           cache: 'pip'
 
       - name: Install dependencies
@@ -71,9 +76,12 @@ jobs:
         working-directory: ansible_collections/devsec/hardening
 
       - name: Downgrade Ansible for Rocky 8 tests
-        run: pip install "ansible-core<2.17"
+        run: |
+            pip install "ansible-core<2.17"
+            ansible-galaxy collection install 'community.crypto:<3.0.0'
+            ansible-galaxy collection install 'community.general:<12.0.0'
         working-directory: ansible_collections/devsec/hardening
-        if: matrix.molecule_distro == 'rocky8'
+        if: matrix.molecule_distro == 'rocky8' || matrix.molecule_distro == 'almalinux8'
 
       - name: Test with molecule
         run: molecule test -s os_hardening
